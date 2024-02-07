@@ -49,70 +49,65 @@ int hash_code(const char *word) {
     return hash % INITIAL_HASH_TABLE_SIZE;
 }
 
-// table_t *resize_table(table_t *orig) {
-//     // Double the size of the hash table
-//     unsigned int new_length = orig->length * 2;
-//     // Create a new table with the doubled size
-//     //table_t *new_table = malloc(sizeof(table_t));
-//     dictionary_t *dict = create_dictionary();
-//     if (dict->table == NULL) {
-//         return NULL; // Allocation failure
-//     }
-//     // Initialize each element in the new array to NULL
-//     dict->table->array = malloc(new_length * sizeof(list_node_t *));
-//     if (dict->table->array == NULL) {
-//         free(dict->table); // Clean up on failure
-//         return NULL;
-//     }
-//     for (unsigned int i = 0; i < new_length; ++i) {
-//         dict->table->array[i] = NULL;
-//     }
-//     dict->table->length = new_length;
-//     // Rehash and insert nodes from the original table to the new table
-//     for (unsigned int i = 0; i < orig->length; ++i) {
-//         list_node_t *current = orig->array[i];
-//         while (current != NULL) {
-//             // list_node_t *next = current->next;
-
-//             // // Rehash the word and insert into the new table
-//             // int index = hash_code(current->word) % dict->table->length;
-//             // current->next = dict->table->array[index];
-//             // dict->table->array[index] = current;
-
-//             // current = next;
-//             dict_insert(dict,current->word);
-//             current = current->next;
-//         }
-//     }
-//     // // Free the old table, but not the array
-//     // for (unsigned int i = 0; i < orig->length; ++i) {
-//     //     list_node_t *current = orig->array[i];
-//     //     while (current != NULL) {
-//     //         list_node_t *next = current->next;
-//     //         current = next;
-//     //         free(current);
-//     //     }
-//     // }
-//     return dict->table;
-// }
+table_t *resize_table(table_t *orig) {
+    // Double the size of the hash table
+    int new_length = orig->length * 2;
+    // Create a new table with the doubled size
+    table_t *new_table = malloc(sizeof(table_t));
+    if (new_table->array == NULL) {
+        return NULL; // Allocation failure
+    }
+    // Initialize each element in the new array to NULL
+    new_table->array = malloc(new_length * sizeof(list_node_t *));
+    if (new_table->array == NULL) {
+        return NULL;
+    }
+    for (int i = 0; i < new_length; i++){
+        new_table->array[i] = NULL;
+    }
+    new_table->length = new_length;
+    // Rehash and insert nodes from the original table to the new table
+    for (int i = 0; i < orig->length; i++) {
+        list_node_t *current = orig->array[i];
+        while (current != NULL) {
+            list_node_t *next = malloc(sizeof(list_node_t));
+            if(next==NULL){
+                free(new_table->array);
+                return NULL;
+            }
+            strncpy(new_node->word, current->word, MAX_WORD_LEN - 1);
+            new_node->word[MAX_WORD_LEN - 1] = '\0';
+            // Rehash the word and insert into the new table
+            int index = hash_code(current->word) % new_table->length;
+            new_node->next = new_table->array[index];
+            new_table->array[index] = new_node;
+            list_node_t *temp_node = current;
+            current = current->next;
+            free(temp_node);
+        }
+    }
+    free(new_table->array);
+    free(new_table);
+    return dict->table;
+}
 
 
 int dict_insert(dictionary_t *dict, const char *word) {
     if (dict == NULL || dict->table == NULL) {
         return 0; // Dictionary not properly initialized
     }
-    // Check if resizing is needed
-    // double load_factor = (double)dict->size / dict->table->length;
-    // if (load_factor > LOAD_FACTOR_THRESHOLD) {
-    //     dictionary_t *dict = create_dictionary();
-    //     table_t *new_table = resize_table(dict->table);
-    //     if(new_table == NULL) {
-    //         fprintf(stderr, "Error: Failed to resize the table.\n");
-    //         return -1; // Resize failure
-    //     }
-    //     dict->table = new_table;
-    //     free(dict->table);
-    // }
+    //Check if resizing is needed
+    double load_factor = (double)dict->size / dict->table->length;
+    if (load_factor > LOAD_FACTOR_THRESHOLD) {
+        dictionary_t *dict = create_dictionary();
+        table_t *new_table = resize_table(dict->table);
+        if(new_table == NULL) {
+            fprintf(stderr, "Error: Failed to resize the table.\n");
+            return -1; // Resize failure
+        }
+        dict->table = new_table;
+        free(dict->table);
+    }
     // Check if the word already exists in the dictionary
     if (dict_find(dict, word)) {
         printf("Word '%s' already exists in the dictionary.\n", word);
